@@ -1,0 +1,1 @@
+# Detyra2_Rrjeta_Kompjuterike_Gr16
