@@ -1,17 +1,15 @@
 #include <iostream>
-#include <unistd.h>
-#include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-
+#include <fstream>
+#include <winsock2.h>
 
 using namespace std;
 
-int main() {
-	
+#define SERVER "127.0.0.1"
+#define BUFLEN 512
+#define PORT 8888
 
-	int portNumber = 12345;
-	const char* ipAddress = "127.0.0.1";
+int main()
+{
 
 	return 0;
 }
