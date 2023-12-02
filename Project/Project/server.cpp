@@ -1,12 +1,12 @@
 #include <iostream>
+#include <fstream>
 #include <winsock2.h>
 #include <string>
-#include <fstream>
 #include <unordered_set>
 #include <unordered_map>
 
 #pragma comment(lib, "ws2_32.lib")
-#pragma warning(disable :4996)
+#pragma warning(disable : 4996)
 
 #define BUFLEN 512
 #define PORT 8888
@@ -14,21 +14,10 @@
 using namespace std;
 
 // Metoda per te shkruar ne file
-void writeFile(const string& filename,const string& content){
-    ofstream file(filename,ios::out | ios::binary);
-    if(file.is_open()){
-        file <<content;
-        file.close();
-    }else{
-        cout<<"Error opening file: " <<filename <<endl;
-    }
-}
-
-// Metoda per append ne file
-
-void appendFile(const string& filename,const string& content){
-    ofstream file(filename,ios::out |ios::app |ios::binary);
-       if (file.is_open())
+void writeFile(const string& filename, const string& content)
+{
+    ofstream file(filename, ios::out | ios::binary);
+    if (file.is_open())
     {
         file << content;
         file.close();
@@ -37,202 +26,308 @@ void appendFile(const string& filename,const string& content){
     {
         cout << "Error opening file: " << filename << endl;
     }
-    
 }
 
-
-int main() {
-    WSADATA wsData;
-    WORD ver = MAKEWORD(2, 2);
-
-    int wsOk = WSAStartup(ver, &wsData);
-    if (wsOk != 0) {
-        std::cerr << "Can't initialize winsock! Quitting" << std::endl;
-        return -1;
+// Metoda per append ne file
+void appendFile(const string& filename, const string& content)
+{
+    ofstream file(filename, ios::out | ios::app | ios::binary);
+    if (file.is_open())
+    {
+        file << content;
+        file.close();
     }
-
-    SOCKET udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (udpSocket == INVALID_SOCKET) {
-        std::cerr << "Can't create a socket! Quitting" << std::endl;
-        return -1;
+    else
+    {
+        cout << "Error opening file: " << filename << endl;
     }
-
-    sockaddr_in serverHint;
-    serverHint.sin_family = AF_INET;
-    serverHint.sin_port = htons(1065);
-    serverHint.sin_addr.S_un.S_addr = INADDR_ANY;
-
-    bind(udpSocket, (sockaddr*)&serverHint, sizeof(serverHint));
-
-    std::cout << "Server is listening on IP: " << GetServerIpAddress() << ", Port: " << ntohs(serverHint.sin_port) << std::endl;
-
-    std::string cppProgram = R"(
-#include <iostream>
-
-int main() {
-    // Your code here
-
-    return 0;
 }
-)";
 
-    createFile("server_executable.cpp", cppProgram);
+int main()
+{
 
-    char buf[4096];
+    system("title UDP Server");
 
-    sockaddr_in client;
-    int clientLength = sizeof(client);
+    // Inicializimi i winsock
+    WSADATA wsa;
+    printf("Initialising Winsock...");
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+    {
+        printf("Failed. Error Code: %d", WSAGetLastError());
+        exit(0);
+    }
+    printf("Initialised.\n");
 
-    while (true) {
-        ZeroMemory(&client, sizeof(client));
-        ZeroMemory(buf, sizeof(buf));
+    // Krijimi i socket
+    SOCKET server_socket;
+    if ((server_socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+    {
+        printf("Could not create socket: %d", WSAGetLastError());
+    }
+    printf("Socket created.\n");
 
-        int bytesIn = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
+    // Pregatitim strukturen sockaddr_in
+    sockaddr_in server;
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = inet_addr("192.168.1.11");;
+    server.sin_port = htons(PORT);
 
-        if (bytesIn == SOCKET_ERROR) {
-            std::cerr << "Error receiving from client" << std::endl;
-            continue;
+    // Lidhja
+    if (bind(server_socket, (sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
+    {
+        printf("Bind failed with error code: %d", WSAGetLastError());
+        exit(EXIT_FAILURE);
+    }
+    puts("Bind done.");
+    // Ndihmojne per te mbajtur mend klientin e pare i cili i eshte casur serverit
+    unordered_set<string> firstClient;
+    unordered_map<string, sockaddr_in> clientAddresses;
+
+    while (true)
+    {
+        printf("Waiting for data...");
+        fflush(stdout);
+        char message[BUFLEN] = {};
+
+        // Per te marre te dhena nga klienti
+        sockaddr_in clientAddr;
+        int slen = sizeof(clientAddr);
+        int message_len;
+        if ((message_len = recvfrom(server_socket, message, BUFLEN, 0, (sockaddr*)&clientAddr, &slen)) == SOCKET_ERROR)
+        {
+            printf("recvfrom() failed with error code: %d", WSAGetLastError());
+            exit(0);
         }
 
-        char clientIp[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &client.sin_addr, clientIp, INET_ADDRSTRLEN);
+        printf("Received packet from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
-        std::cout << getCurrentDateTime() << " - Message received from " << clientIp << ":" << ntohs(client.sin_port) << " - " << buf << std::endl << std::flush;
+        string clientKey = string(inet_ntoa(clientAddr.sin_addr)) + ":" + to_string(ntohs(clientAddr.sin_port));
 
-        if (std::string(buf) == "EXECUTE_CODE") {
-            sendto(udpSocket, "READY_FOR_CODE", sizeof("READY_FOR_CODE"), 0, (sockaddr*)&client, sizeof(client));
+        // Nqs klienti ka shkruar komanden "execute"
+        if (strcmp(message, "execute") == 0)
+        {
+            if (firstClient.empty() || firstClient.count(clientKey) > 0) {
 
-            ZeroMemory(buf, sizeof(buf));
-            int codeBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-            std::string userCode(buf, 0, codeBytes);
+                // Gjenerimi i nje numri te rastesishem 1-100
+                int magicNumber = rand() % 100 + 1;
 
-            std::string fullCode = cppProgram;
-            size_t pos = cppProgram.find("// Your code here");
-            if (pos != std::string::npos) {
-                fullCode.replace(pos, 18, userCode);
-            }
+                // Informojme klientin qe numri eshte gjeneruar
+                string response = "Magic number generated. Try to guess! You have 5 guesses";
+                if (sendto(server_socket, response.c_str(), response.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                {
+                    printf("sendto() failed with error code: %d", WSAGetLastError());
+                    return 3;
+                }
 
-            createFile("server_executable.cpp", fullCode);
-
-            std::string output = compileAndExecuteCode();
-
-            sendOutputToClient(output, udpSocket, client);
-        }
-        else if (std::string(buf) == "ADMIN") {
-            sendto(udpSocket, "ENTER_PASSWORD", sizeof("ENTER_PASSWORD"), 0, (sockaddr*)&client, sizeof(client));
-
-            ZeroMemory(buf, sizeof(buf));
-            int passwordBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-            std::string enteredPassword(buf, 0, passwordBytes);
-
-            if (enteredPassword == "12345") {
-                sendto(udpSocket, "ADMIN_ACCESS_GRANTED", sizeof("ADMIN_ACCESS_GRANTED"), 0, (sockaddr*)&client, sizeof(client));
-
-                while (true) {
-                    ZeroMemory(buf, sizeof(buf));
-                    int adminRequestBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                    std::string adminRequest(buf, 0, adminRequestBytes);
-
-                    if (adminRequest == "READ_FILE") {
-                        sendto(udpSocket, "ENTER_FILE_NAME", sizeof("ENTER_FILE_NAME"), 0, (sockaddr*)&client, sizeof(client));
-
-                        ZeroMemory(buf, sizeof(buf));
-                        int fileNameBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                        std::string fileName(buf, 0, fileNameBytes);
-
-                        readFile(fileName, udpSocket, client);
+                int i = 5;
+                // Klienti ka 5 mundesi per t'ia qelluar numrit te sakte
+                while (i > 0)
+                {
+                    i--;
+                    // Marrim pergjigjjen e klientit
+                    char guessMessage[BUFLEN];
+                    int guessMessageLength = recvfrom(server_socket, guessMessage, BUFLEN, 0, (sockaddr*)&clientAddr, &slen);
+                    if (guessMessageLength == SOCKET_ERROR)
+                    {
+                        printf("recvfrom() failed with error code: %d", WSAGetLastError());
+                        exit(0);
                     }
-                    else if (adminRequest == "WRITE_FILE") {
-                        sendto(udpSocket, "ENTER_FILE_NAME", sizeof("ENTER_FILE_NAME"), 0, (sockaddr*)&client, sizeof(client));
 
-                        ZeroMemory(buf, sizeof(buf));
-                        int fileNameBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                        std::string fileName(buf, 0, fileNameBytes);
+                    guessMessage[guessMessageLength] = '\0';
 
-                        sendto(udpSocket, "ENTER_FILE_CONTENT", sizeof("ENTER_FILE_CONTENT"), 0, (sockaddr*)&client, sizeof(client));
+                    // Kthejme pergjigjjen ne integjer
+                    int clientGuess = atoi(guessMessage);
 
-                        ZeroMemory(buf, sizeof(buf));
-                        int contentBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                        std::string content(buf, 0, contentBytes);
+                    // Nqs i'a ka qelluar numrit
+                    if (clientGuess == magicNumber)
+                    {
 
-                        writeFile(fileName, content, udpSocket, client, true);
-                    }
-                    else if (adminRequest == "EXECUTE_FILE") {
-                        sendto(udpSocket, "ENTER_FILE_NAME", sizeof("ENTER_FILE_NAME"), 0, (sockaddr*)&client, sizeof(client));
-
-                        ZeroMemory(buf, sizeof(buf));
-                        int fileNameBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                        std::string fileName(buf, 0, fileNameBytes);
-
-                        executeFile(fileName, udpSocket, client, true);
-                    }
-                    else if (adminRequest == "EXECUTE_CODE") {
-                        sendto(udpSocket, "READY_FOR_CODE", sizeof("READY_FOR_CODE"), 0, (sockaddr*)&client, sizeof(client));
-
-                        ZeroMemory(buf, sizeof(buf));
-                        int codeBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                        std::string userCode(buf, 0, codeBytes);
-
-                        std::string fullCode = cppProgram;
-                        size_t pos = cppProgram.find("// Your code here");
-                        if (pos != std::string::npos) {
-                            fullCode.replace(pos, 18, userCode);
+                        string successMessage = "Congratulations! You guessed the magic number!";
+                        if (sendto(server_socket, successMessage.c_str(), successMessage.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                        {
+                            printf("sendto() failed with error code: %d", WSAGetLastError());
+                            return 3;
                         }
 
-                        createFile("server_executable.cpp", fullCode);
-
-                        std::string output = compileAndExecuteCode();
-
-                        sendOutputToClient(output, udpSocket, client);
-                    }
-                    else if (adminRequest == "QUIT") {
-                        sendto(udpSocket, "ADMIN_QUIT", sizeof("ADMIN_QUIT"), 0, (sockaddr*)&client, sizeof(client));
+                        printf("Client guessed the correct number!\n");
                         break;
                     }
-                    else {
-                        sendto(udpSocket, "Invalid command.", sizeof("Invalid command."), 0, (sockaddr*)&client, sizeof(client));
+                    else if (clientGuess > magicNumber && i != 0)
+                    {
+                        // Nqs numri eshte me i vogel
+                        string errorMessage = "The magic number is smaller! Your tries: " + to_string(i);
+                        if (sendto(server_socket, errorMessage.c_str(), errorMessage.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                        {
+                            printf("sendto() failed with error code: %d", WSAGetLastError());
+                            return 3;
+                        }
                     }
+                    else if (clientGuess < magicNumber && i != 0)
+                    {
+                        // Nqs numri eshte me i madh
+                        string errorMessage = "The magic number is bigger! Your tries: " + to_string(i);
+                        if (sendto(server_socket, errorMessage.c_str(), errorMessage.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                        {
+                            printf("sendto() failed with error code: %d", WSAGetLastError());
+                            return 3;
+                        }
+                    }
+                    // Nqs klienti ka harxhuar te gjitha mundesite
+                    if (i == 0)
+                    {
+                        string errorMessage = "You lost the game! The magic number was: " + to_string(magicNumber);
+                        if (sendto(server_socket, errorMessage.c_str(), errorMessage.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                        {
+                            printf("sendto() failed with error code: %d", WSAGetLastError());
+                            return 3;
+                        }
 
-                    // Add a delay to allow the console to display the output
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        printf("Client didn't guess the correct number\n");
+                    }
                 }
+                firstClient.insert(clientKey); // Ky klient ka te drejte per execute
+
             }
             else {
-                sendto(udpSocket, "ADMIN_ACCESS_DENIED", sizeof("ADMIN_ACCESS_DENIED"), 0, (sockaddr*)&client, sizeof(client));
+                // Dergojme mesazh errori klientit se ai nuk eshte i pari dhe nuk ka te drejta per execute
+                string errorMsg = "Magic Number Game not allowed for this client";
+                if (sendto(server_socket, errorMsg.c_str(), errorMsg.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                {
+                    printf("sendto() failed with error code: %d", WSAGetLastError());
+                    return 3;
+                }
             }
         }
-        else if (std::string(buf) == "GUEST") {
-            while (true) {
-                ZeroMemory(buf, sizeof(buf));
-                int guestRequestBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                std::string guestRequest(buf, 0, guestRequestBytes);
-                if (guestRequest == "READ_FILE") {
-                    sendto(udpSocket, "ENTER_FILE_NAME", sizeof("ENTER_FILE_NAME"), 0, (sockaddr*)&client, sizeof(client));
 
-                    ZeroMemory(buf, sizeof(buf));
-                    int fileNameBytes = recvfrom(udpSocket, buf, sizeof(buf), 0, (sockaddr*)&client, &clientLength);
-                    std::string fileName(buf, 0, fileNameBytes);
+        // Nqs komanda eshte per te lexuar nje file
+        else if (strncmp(message, "file r: ", 8) == 0)
+        {
+            // Marrim emrin e file
+            string filename = message + 8;
 
-                    readFile(fileName, udpSocket, client);
-                }
-                else if (guestRequest == "QUIT") {
-                    sendto(udpSocket, "GUEST_QUIT", sizeof("GUEST_QUIT"), 0, (sockaddr*)&client, sizeof(client));
-                    break;
-                }
-                else {
-                    sendto(udpSocket, "Invalid command.", sizeof("Invalid command."), 0, (sockaddr*)&client, sizeof(client));
+            // Hapja e file
+            ifstream file(filename, ios::binary);
+            if (!file.is_open())
+            {
+                cout << "Error opening file: " << filename << endl;
+
+                // Nqs ka ndodhur ndonje gabim gjate hapjes se file
+                string errorMsg = "Error opening file: " + filename;
+                if (sendto(server_socket, errorMsg.c_str(), errorMsg.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                {
+                    printf("sendto() failed with error code: %d", WSAGetLastError());
+                    return 3;
                 }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+
+            // Lexojme permbajtjen nga file
+            string fileContent((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+            file.close();
+
+            // Dergojme file klientit
+            if (sendto(server_socket, fileContent.c_str(), fileContent.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+            {
+                printf("sendto() failed with error code: %d", WSAGetLastError());
+                return 3;
             }
         }
-        else {
-            sendto(udpSocket, "Unknown command.", sizeof("Unknown command."), 0, (sockaddr*)&client, sizeof(client));
+        // Nqs mesazhi eshte per te shtuar ne file
+        else if (strncmp(message, "file a: ", 8) == 0)
+        {
+            if (firstClient.empty() || firstClient.count(clientKey) > 0)
+            {
+                // Marrim emrin e file dhe permbajtjen nga mesazhi
+                string fileAppendCommand = message + 8;
+                size_t pos = fileAppendCommand.find(' ');
+                if (pos != string::npos)
+                {
+                    string filename = fileAppendCommand.substr(0, pos);
+                    string content = fileAppendCommand.substr(pos + 1);
+
+                    // Shtojme permbajtjen ne file
+                    appendFile(filename, content);
+
+                    // Nqs permbajtja eshte shtuar me sukses
+                    string successMsg = "Content appended to file: " + filename;
+                    if (sendto(server_socket, successMsg.c_str(), successMsg.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                    {
+                        printf("sendto() failed with error code: %d", WSAGetLastError());
+                        return 3;
+                    }
+
+                    firstClient.insert(clientKey); // Ky klient ka te drejte per append
+                }
+            }
+            else
+            {
+                // Dergojme error mesazh klienteve te cilet nuk jane te paret, se nuk kane te drejta per append
+                string errorMsg = "Append operation not allowed for this client";
+                if (sendto(server_socket, errorMsg.c_str(), errorMsg.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                {
+                    printf("sendto() failed with error code: %d", WSAGetLastError());
+                    return 3;
+                }
+            }
+        }
+        else if (strncmp(message, "file w: ", 8) == 0)
+        {
+            if (firstClient.empty() || firstClient.count(clientKey) > 0)
+            {
+                // Marrim emrin e file dhe permbajtjen nga mesazhi
+                string fileWriteCommand = message + 8;
+                size_t pos = fileWriteCommand.find(' ');
+                if (pos != string::npos)
+                {
+                    string filename = fileWriteCommand.substr(0, pos);
+                    string content = fileWriteCommand.substr(pos + 1);
+
+                    // Shkruajme permbajtjen ne file
+                    writeFile(filename, content);
+
+                    // Dergojme mesazh qe permbajtja eshte shkruar me sukses
+                    string successMsg = "Content written to file: " + filename;
+                    if (sendto(server_socket, successMsg.c_str(), successMsg.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                    {
+                        printf("sendto() failed with error code: %d", WSAGetLastError());
+                        return 3;
+                    }
+
+                    firstClient.insert(clientKey); // Ky klient ka te drejta per w
+                }
+            }
+            else
+            {
+                // Dergojme error mesazh klienteve te cilet nuk jane te paret, se nuk kane te drejta per write
+                string errorMsg = "Write operation not allowed for this client";
+                if (sendto(server_socket, errorMsg.c_str(), errorMsg.size(), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+                {
+                    printf("sendto() failed with error code: %d", WSAGetLastError());
+                    return 3;
+                }
+            }
+        }
+        else
+        {
+            // Printimi i te dhenave
+            printf("Client says: %s\n", message);
+
+            // Serveri shkruan mesazhin
+            char serverMessage[BUFLEN];
+            printf("Enter message to client: ");
+            cin.getline(serverMessage, BUFLEN);
+
+            // Dergimi i mesazhit tek klienti
+            if (sendto(server_socket, serverMessage, strlen(serverMessage), 0, (sockaddr*)&clientAddr, sizeof(sockaddr_in)) == SOCKET_ERROR)
+            {
+                printf("sendto() failed with error code: %d", WSAGetLastError());
+                return 3;
+            }
         }
     }
 
-    closesocket(udpSocket);
+    closesocket(server_socket);
     WSACleanup();
-
     return 0;
 }
