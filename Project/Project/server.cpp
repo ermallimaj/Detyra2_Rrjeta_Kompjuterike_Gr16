@@ -1,189 +1,45 @@
 #include <iostream>
-#include <WS2tcpip.h>
+#include <winsock2.h>
 #include <string>
 #include <fstream>
-#include <cstdlib>
-#include <cstdio>
-#include <chrono>
-#include <thread>
-#include <filesystem>
-#include <vector>
-#include <sstream>
-#include <ctime>
+#include <unordered_set>
+#include <unordered_map>
+
 #pragma comment(lib, "ws2_32.lib")
-#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable :4996)
 
-namespace fs = std::filesystem;
+#define BUFLEN 512
+#define PORT 8888
 
-std::string GetServerIpAddress() {
-    char hostName[256];
-    gethostname(hostName, sizeof(hostName));
+using namespace std;
 
-    struct addrinfo* result = nullptr;
-    struct addrinfo hints;
-
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-
-    if (getaddrinfo(hostName, nullptr, &hints, &result) == 0) {
-        char ipAddress[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &((struct sockaddr_in*)result->ai_addr)->sin_addr, ipAddress, INET_ADDRSTRLEN);
-        freeaddrinfo(result);
-        return ipAddress;
+// Metoda per te shkruar ne file
+void writeFile(const string& filename,const string& content){
+    ofstream file(filename,ios::out | ios::binary);
+    if(file.is_open()){
+        file <<content;
+        file.close();
+    }else{
+        cout<<"Error opening file: " <<filename <<endl;
     }
-
-    return "Unknown";
 }
 
-struct ClientInfo {
-    SOCKET socket;
-    sockaddr_in address;
-    bool isAdmin;
-};
+// Metoda per append ne file
 
-std::vector<ClientInfo> clients;
-
-std::string getCurrentDateTime() {
-    auto now = std::chrono::system_clock::now();
-    std::time_t currentTime;
-    std::time(&currentTime);
-    std::tm localTime;
-    localtime_s(&localTime, &currentTime);
-    std::stringstream ss;
-    ss << std::put_time(&localTime, "%Y-%m-%d %X");
-    return ss.str();
-}
-
-void createFile(const std::string& fileName, const std::string& content) {
-    std::ofstream file(fileName);
-    if (file.is_open()) {
+void appendFile(const string& filename,const string& content){
+    ofstream file(filename,ios::out |ios::app |ios::binary);
+       if (file.is_open())
+    {
         file << content;
         file.close();
     }
+    else
+    {
+        cout << "Error opening file: " << filename << endl;
+    }
+    
 }
 
-std::string compileExecuteFiles(std::string user_file) {
-#ifdef _WIN32
-    std::string compileCommand = "g++ -o " + user_file + ".exe " + user_file;
-    std::string executeCommand = user_file + ".exe";
-#else
-    std::string compileCommand = "g++ -o " + user_file + " " + user_file;
-    std::string executeCommand = "./" + user_file;
-#endif
-
-    int compileResult = system(compileCommand.c_str());
-
-    if (compileResult != 0) {
-        std::cerr << "Error compiling code." << std::endl;
-        return "Error compiling code.";
-    }
-
-    FILE* pipe = _popen(executeCommand.c_str(), "r");
-
-    if (pipe) {
-        char output[4096];
-        std::string result;
-
-        while (fgets(output, sizeof(output), pipe) != nullptr) {
-            result += output;
-        }
-
-        _pclose(pipe);
-        return result;
-    }
-    else {
-        std::cerr << "Error executing code." << std::endl;
-        return "Error executing code.";
-    }
-}
-
-std::string compileAndExecuteCode() {
-#ifdef _WIN32
-    std::string compileCommand = "g++ -o server_executable server_executable.cpp";
-    std::string executeCommand = ".\\server_executable";
-#else
-    std::string compileCommand = "g++ -o server_executable server_executable.cpp";
-    std::string executeCommand = "./server_executable";
-#endif
-
-    int compileResult = system(compileCommand.c_str());
-
-    if (compileResult != 0) {
-        std::cerr << "Error compiling code." << std::endl;
-        return "Error compiling code.";
-    }
-
-    FILE* pipe = _popen(executeCommand.c_str(), "r");
-
-    if (pipe) {
-        char output[4096];
-        std::string result;
-
-        while (fgets(output, sizeof(output), pipe) != nullptr) {
-            result += output;
-        }
-
-        _pclose(pipe);
-        return result;
-    }
-    else {
-        std::cerr << "Error executing code." << std::endl;
-        return "Error executing code.";
-    }
-}
-
-void sendOutputToClient(const std::string& output, SOCKET udpSocket, const sockaddr_in& client) {
-    sendto(udpSocket, output.c_str(), output.size() + 1, 0, (sockaddr*)&client, sizeof(client));
-}
-
-void executeFile(const std::string& fileName, SOCKET udpSocket, const sockaddr_in& client, bool isAdmin) {
-    std::string output;
-
-#ifdef _WIN32
-    std::string executeCommand = fileName + ".exe";
-    output = "Executing: " + fileName + "\n" + compileExecuteFiles(fileName);
-#else
-    std::string executeCommand = "./" + fileName;
-    output = "Executing: " + fileName + "\n" + compileExecuteFiles(fileName);
-#endif
-
-    sendOutputToClient(output, udpSocket, client);
-}
-
-void readFile(const std::string& fileName, SOCKET udpSocket, const sockaddr_in& client) {
-    std::ifstream file(fileName);
-
-    if (file.is_open()) {
-        std::ostringstream fileContents;
-        fileContents << file.rdbuf();
-        file.close();
-
-        sendOutputToClient(fileContents.str(), udpSocket, client);
-    }
-    else {
-        sendOutputToClient("Error reading file.", udpSocket, client);
-    }
-}
-
-void writeFile(const std::string& fileName, const std::string& content, SOCKET udpSocket, const sockaddr_in& client, bool isAdmin) {
-    if (isAdmin) {
-        std::ofstream file(fileName);
-
-        if (file.is_open()) {
-            file << content;
-            file.close();
-
-            sendOutputToClient("File written successfully.", udpSocket, client);
-        }
-        else {
-            sendOutputToClient("Error writing file.", udpSocket, client);
-        }
-    }
-    else {
-        sendOutputToClient("Permission denied.", udpSocket, client);
-    }
-}
 
 int main() {
     WSADATA wsData;
