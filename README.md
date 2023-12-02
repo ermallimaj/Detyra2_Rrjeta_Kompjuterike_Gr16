@@ -24,3 +24,9 @@ Serveri
 11. Të jetë në gjendje të lexojë përgjigjet që i kthehen nga serveri;
 12. Të dërgojë mesazh serverit si në formë tekstit;
 13. Të ketë qasje të plotë në folderat/ përmbajtjen në server.
+
+Anetaret e grupit:
+Ermal Limaj
+Erza Berbatovci
+Erza Merovci
+Ferdeze Nurkasa
