@@ -1,6 +1,7 @@
-# Programming with Sockets
+# Programming with Sockets-
 
 ## Përshkrimi i projektit të dytë – Rrjetat Kompjuterike
+Protokolli UDP-Gjuha programuese C++
 
 Serveri
 
