@@ -1,32 +1,50 @@
-# Programming with Sockets-
+# Computer Networks Project- Programming with sockets
 
-## Përshkrimi i projektit të dytë – Rrjetat Kompjuterike
-Protokolli UDP-Gjuha programuese C++
+## UDP server implemented in C++
 
-Serveri
+This repository contains the code for a simple UDP server implemented in C++ for a computer networks project. The server communicates with clients over UDP and supports various operations, including a math game, file reading, file appending, file writing, and code execution.
 
-1. Të vendosen variabla te cilat përmbajnë numrin e portit (numri i portit të jetë i
-   çfarëdoshëm) dhe IP adresën;
-2. Të jetë në gjendje të dëgjojë (listen) të paktën të gjithë anëtaret e grupit;
-3. Të pranojë kërkesat e pajisjeve që dërgojnë request (ku secili anëtarë i grupit duhet te e
-   ekzekutoje të paktën një kërkesë në server);
-4. Të jetë në gjendje të lexoj mesazhet që dërgohen nga klientët;
-5. Të jetë në gjendje të jap qasje të plotë të paktën njërit klient për qasje ne folderat/
-   përmbajtjen në file-t në server.
+### Project description:
+Server
 
-   Klienti
+Define variables containing the port number (the port number should be arbitrary) and the IP address.
 
-6. Të krijohet socket lidhja me server;
-7. Njeri nga pajisjet (klientët) të ketë privilegjet write(), read(), execute();
-8. Klientët tjerë të kenë vetëm read() permission;
-9. Të behet lidhja me serverin duke përcaktuar sakt portin dhe IP Adresën e serverit;
-10. Të definohen sakte socket e serverit dhe lidhje të mos dështojë;
-11. Të jetë në gjendje të lexojë përgjigjet që i kthehen nga serveri;
-12. Të dërgojë mesazh serverit si në formë tekstit;
-13. Të ketë qasje të plotë në folderat/ përmbajtjen në server.
+Be able to listen for incoming connections from all members of the group.
 
-Anetaret e grupit:
-Ermal Limaj
-Erza Berbatovci
-Erza Merovci
-Ferdeze Nurkasa
+Accept requests from devices that send requests (each group member must execute at least one request on the server).
+
+Read messages sent by clients.
+
+Provide full access to at least one client to access folders/content/files on the server.
+
+Client
+
+Establish a socket connection with the server.
+
+One of the devices (clients) should have the privileges of write(), read(), execute().
+
+Other clients should only have read() permission.
+
+Establish a connection with the server by specifying the correct port and IP address.
+
+Define server socket correctly and ensure that the connection does not fail.
+
+Read responses returned by the server.
+
+Send messages to the server in text form.
+
+Have full access to folders/content on the server.
+
+### Features:
+Math Game: The server picks two random numbers (1-10) and a random operator (+, -, *, /, %).
+Clients receive a math problem like "3 + 7" and try to solve it.
+The server checks the client's answer and provides feedback.
+Clients have a few guesses before the correct solution is revealed.
+
+File Operations:
+
+Read File: Clients can request to read the content of a specified file.
+Append to File: Clients with appropriate privileges can append content to a file.
+Write to File: Clients with appropriate privileges can write new content to a file.
+Code Execution: Clients with the necessary privileges can send C++ code snippets to the server for compilation and execution. The server sends back the result of the code execution.
+
