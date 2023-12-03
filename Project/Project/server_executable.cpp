@@ -1,8 +1,5 @@
-
 #include <iostream>
-
 int main() {
-    // Your code here
-
+    std :: cout << "Hello admin client";
     return 0;
 }
