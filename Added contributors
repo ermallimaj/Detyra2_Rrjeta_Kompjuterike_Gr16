@@ -48,3 +48,9 @@ Clients have a few guesses before the correct solution is revealed.
 3. Write to File: Clients with appropriate privileges can write new content to a file.
 4. Code Execution: Clients with the necessary privileges can send C++ code snippets to the server for compilation and execution. The server sends back the result of the code execution.
 
+###Contributors:
+Ermal Limaj
+Erza Berbatovci
+Erza Merovci
+Ferdeze Nurkasa
+
