@@ -110,7 +110,7 @@ int main()
 
 	sockaddr_in server;
 	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = inet_addr("192.168.0.105");
+	server.sin_addr.s_addr = inet_addr("192.168.1.11");
 	server.sin_port = generatePort(1000, 9999);
 
 	if (bind(server_socket, (sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
