@@ -48,9 +48,18 @@ Clients have a few guesses before the correct solution is revealed.
 3. Write to File: Clients with appropriate privileges can write new content to a file.
 4. Code Execution: Clients with the necessary privileges can send C++ code snippets to the server for compilation and execution. The server sends back the result of the code execution.
 
-###Contributors:
-Ermal Limaj
-Erza Berbatovci
-Erza Merovci
-Ferdeze Nurkasa
+### Contributors:
+1. Ermal Limaj
+2. Erza Berbatovci
+3. Erza Merovci
+4. Ferdeze Nurkasa
+   
+Client-server communication and features shown with photos:
+<img width="525" alt="wre" src="https://github.com/ermallimaj/Detyra2_Rrjeta_Kompjuterike_Gr16/assets/116812415/48c736ed-cf6b-405d-87ff-cc2293c42e9d">
+
+<img width="525" alt="exe" src="https://github.com/ermallimaj/Detyra2_Rrjeta_Kompjuterike_Gr16/assets/116812415/aa897b4a-c56f-477c-96f3-4d6cc0720947">
+
+<img width="531" alt="game" src="https://github.com/ermallimaj/Detyra2_Rrjeta_Kompjuterike_Gr16/assets/116812415/11427dfb-d927-46ac-bcbf-1f85ddca8067">
+
+
 
