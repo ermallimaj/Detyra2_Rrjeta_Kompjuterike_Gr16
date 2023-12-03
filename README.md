@@ -1,10 +1,38 @@
 # Computer Networks Project- Programming with sockets
 
-## UDP server implemented in C++
-
-This repository contains the code for a simple UDP server implemented in C++ for a computer networks project. The server communicates with clients over UDP and supports various operations, including a math game, file reading, file appending, file writing, and code execution.
+## UDP server implemented in C++ 
 
 ### Project description:
+**Server**
+
+Define variables containing the port number (the port number should be arbitrary) and the IP address.
+
+Be able to listen for incoming connections from all members of the group.
+
+Accept requests from devices that send requests (each group member must execute at least one request on the server).
+
+Read messages sent by clients.
+
+Provide full access to at least one client to access folders/content/files on the server.
+
+**Client**
+
+Establish a socket connection with the server.
+
+One of the devices (clients) should have the privileges of write(), read(), execute().
+
+Other clients should only have read() permission.
+
+Establish a connection with the server by specifying the correct port and IP address.
+
+Define server socket correctly and ensure that the connection does not fail.
+
+Read responses returned by the server.
+
+Send messages to the server in text form.
+
+Have full access to folders/content on the server.
+
 Server
 
 Define variables containing the port number (the port number should be arbitrary) and the IP address.
@@ -35,24 +63,53 @@ Send messages to the server in text form.
 
 Have full access to folders/content on the server.
 
-### Features:
-#### Math Game: The server picks two random numbers (1-10) and a random operator (+, -, *, /, %).
-Clients receive a math problem like "3 + 7" and try to solve it.
-The server checks the client's answer and provides feedback.
-Clients have a few guesses before the correct solution is revealed.
 
-#### File Operations:
+## Overview
 
-1. Read File: Clients can request to read the content of a specified file.
-2. Append to File: Clients with appropriate privileges can append content to a file.
-3. Write to File: Clients with appropriate privileges can write new content to a file.
-4. Code Execution: Clients with the necessary privileges can send C++ code snippets to the server for compilation and execution. The server sends back the result of the code execution.
+This repository contains the code for a simple UDP server implemented in C++ for a computer networks project. The server communicates with clients over UDP and supports various operations, including a math game, file reading, file appending, file writing, and code execution.
+
+
+## Project Structure
+
+- **server.cpp:** Contains the main server logic.
+- **server_executable.cpp:** Temporary file for user code execution.
+- **client.cpp:** Client-side code to interact with the server.
+
+## Libraries Used
+
+- **Winsock2.h:** Socket programming library for Windows.
+- **iostream, fstream, string:** Standard C++ libraries for I/O and string handling.
+- **unordered_set, unordered_map:** C++ Standard Template Library (STL) containers for managing client states.
+
+## Compilation and Execution
+
+1. Compile the code using an appropriate compiler (g++ for Windows).
+2. Run the compiled code executable on a Windows machine.
+3. Clients can connect to the server using the provided IP address and port.
+
+## Features
+
+1. **Math Game:** Clients can initiate a math game where the server generates math problems for them to solve.
+
+2. **File Operations:**
+   - Read: Clients can request to read the content of a file on the server.
+   - Append: Clients with appropriate permissions can append content to a file on the server.
+   - Write: Clients with appropriate permissions can write content to a file on the server.
+
+3. **Code Execution:**
+   - Clients can send C++ code snippets to the server.
+   - The server compiles and executes the code, providing the results back to the clients.
+
+## Notes
+
+- Ensure that the server is reachable from client machines over the network.
+- The project is designed to run on a Windows machine due to the use of Winsock.
 
 ### Contributors:
-1. Ermal Limaj
-2. Erza Berbatovci
-3. Erza Merovci
-4. Ferdeze Nurkasa
+Ermal Limaj
+Erza Berbatovci
+Erza Merovci
+Ferdeze Nurkasa
    
 Client-server communication and features shown with photos:
 <img width="525" alt="wre" src="https://github.com/ermallimaj/Detyra2_Rrjeta_Kompjuterike_Gr16/assets/116812415/48c736ed-cf6b-405d-87ff-cc2293c42e9d">
