@@ -36,15 +36,15 @@ Send messages to the server in text form.
 Have full access to folders/content on the server.
 
 ### Features:
-Math Game: The server picks two random numbers (1-10) and a random operator (+, -, *, /, %).
+#### Math Game: The server picks two random numbers (1-10) and a random operator (+, -, *, /, %).
 Clients receive a math problem like "3 + 7" and try to solve it.
 The server checks the client's answer and provides feedback.
 Clients have a few guesses before the correct solution is revealed.
 
-File Operations:
+#### File Operations:
 
-Read File: Clients can request to read the content of a specified file.
-Append to File: Clients with appropriate privileges can append content to a file.
-Write to File: Clients with appropriate privileges can write new content to a file.
-Code Execution: Clients with the necessary privileges can send C++ code snippets to the server for compilation and execution. The server sends back the result of the code execution.
+1. Read File: Clients can request to read the content of a specified file.
+2. Append to File: Clients with appropriate privileges can append content to a file.
+3. Write to File: Clients with appropriate privileges can write new content to a file.
+4. Code Execution: Clients with the necessary privileges can send C++ code snippets to the server for compilation and execution. The server sends back the result of the code execution.
 
